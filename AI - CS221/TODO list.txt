@@ -1,0 +1,28 @@
+Schedule:
+	1. Intro				Done
+		a. foundations			Done
+	2. ML 1					Done
+	3. ML 2					Done
+	4. ML 3					Done
+		b. sentiment			Done
+	5. search 1				Done
+	6. search 2				Done
+	7. MDP - value iter			Done
+	8. MDP - RL				Done
+		c. reconstruct
+	9. Game Playing 1
+	10. Game Playing 2
+		d. blackjack
+		e. pacman
+	11. Factor graphs 1
+	12. Factor Graphs 2
+		f. scheduling
+	13. Bayesian Nets 1
+	14. Bayesian Nets 2
+	15. Bayesian Nets 3
+		g. car
+	16. Logic 1
+	17. Logic 2
+		h. logic
+	18. Deep Learning
+	19. Conclusion

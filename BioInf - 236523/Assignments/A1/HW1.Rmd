@@ -1,0 +1,281 @@
+---
+title: "Homework 1"
+author: "Almog Angel"
+date: "11/9/2021"
+output: html_document
+---
+
+- Install required packages
+```{r}
+if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+BiocManager::install(version = "3.14")
+```
+
+```{r} 
+if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager") 
+BiocManager::install("Biostrings")
+if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+BiocManager::install("msa")
+```
+
+```{r}
+install.packages("ape")
+install.packages("seqinr")
+```
+
+
+- Load packages
+```{r}
+library(ggplot2, quietly = T)
+library(Biostrings, quietly = T)
+library(msa, quietly = T)
+library(msaR, quietly = T)
+```
+
+- Set your working directory and
+- Read "owid-covid-data.csv" from https://github.com/owid/covid-19-data/raw/master/public/data/owid-covid-data.csv into a variable called "covid_world_data"
+```{r}
+# ToDo: Write your code here
+covid_urlfile = "https://github.com/owid/covid-19-data/raw/master/public/data/owid-covid-data.csv"
+covid_world_data <- read.csv(url(covid_urlfile))
+```
+
+- Take a look at the dataset
+```{r}
+View(covid_world_data)
+```
+
+
+## Task 1 - Discribtive Statistics
+
+- Make a second dataframe and call it "covid_deaths":
+- (1) Take only the following features (columns): "location", "continent", "total_deaths" and "population"
+- (2) And only rows with "date" equal to "2021-11-01"
+- df[, (names(df) %in% c("A","B","E"))]
+```{r}
+covid.deaths <- covid_world_data[, (names(covid_world_data) %in% c("location",
+                                                                     "continent",
+                                                                     "total_deaths",
+                                                                     "population"))]
+covid.dates <- covid_world_data[, (names(covid_world_data) %in% "date")];
+#View(dates)
+#View(deaths_ww_data)
+covid.deaths <- covid.deaths[which(startsWith(covid.dates, "2021-11-01")),]
+View(covid.deaths)#DEBUG
+```
+
+- Some rows have NAs
+```{r}
+covid.deaths[rowSums(is.na(covid.deaths)) != 0, ]
+```
+
+- Others have empty strings ("") in the "continent" column
+```{r}
+covid.deaths[covid.deaths$continent == "",]
+```
+
+- Remove the NAs and empty strings from above, and assign to variable named "covid.deaths.noNA"
+```{r}
+covid.deaths.noNA <- covid.deaths[!(covid.deaths$continent=="" |
+                                    covid.deaths$location=="" |
+                                    is.na(covid.deaths$total_deaths) |
+                                    is.na(covid.deaths$population)),]
+View(covid.deaths.noNA)#DEBUG
+
+
+```
+
+- Calculate the total deaths per million for each country
+- Add your results to a column named "total_deaths_per_million" in covid.deaths.noNA
+```{r}
+total_deaths_per_million <- (covid.deaths.noNA$total_deaths/covid.deaths.noNA$population)*1000000
+covid.deaths.noNA$total_deaths_per_million = total_deaths_per_million
+View(covid.deaths.noNA)#DEBUG
+
+```
+
+- Calculate the mean and median for total_deaths_per_million for each continent
+```{r}
+# ToDo: Write your code here
+#covid.deaths.noNA.mean_deaths_per_million = mean(covid.deaths.noNA$total_deaths_per_million)
+tmp.mean = mean(covid.deaths.noNA$total_deaths_per_million)
+tmp.median = median(covid.deaths.noNA$total_deaths_per_million)
+print(tmp.mean)#DEBUG
+print(tmp.median) #DEBUG
+
+```
+
+## Task 2 - Inferential Statistics
+
+- Take a look at this boxplot
+```{r}
+ggplot(covid.deaths.noNA, aes(x=continent, y=total_deaths_per_million)) +
+  geom_boxplot(aes(fill=continent)) +
+  scale_y_continuous(breaks = seq(0,6000,1000)) +
+  labs(x="", y="Total Deaths (per million)") +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust=1))
+```
+
+- You have been asked to check the hypothesis that mortality rate from COVID-19 in African countries is different than in European countries
+- Take a look at the distribution of "total_deaths_per_million" for European countries, can you say that it is normal (by visual inspection)?
+- It seems like "in the way to becoming a normal distribution", nevertheless we hypothesize that a greater number of experiments would have made the histogram closer to look like a Gaussian.
+```{r}
+hist(covid.deaths.noNA[covid.deaths.noNA$continent == "Europe",]$total_deaths_per_million, breaks = 10)
+```
+
+- How about African countries? NO!!
+```{r}
+hist(covid.deaths.noNA[covid.deaths.noNA$continent == "Africa",]$total_deaths_per_million, breaks = 10)
+```
+
+- We need test the normality of our data in order to choose the right statistical test
+- We can use the "Shapiro-Wilk normality test" to evaluate normality
+- The null hypothesis of the "Shapiro-Wilk normality test" state that the distribution is normal
+- The alternative hypothesis state that it is not
+```{r}
+shapiro.test(covid.deaths.noNA[covid.deaths.noNA$continent == "Europe",]$total_deaths_per_million)
+shapiro.test(covid.deaths.noNA[covid.deaths.noNA$continent == "Africa",]$total_deaths_per_million)
+```
+
+- Can we assume that the distribution of our data is normal?
+```{}
+Write your answer here: 
+
+```
+
+- Mann-Whitney test is a non-parametric statistical test of difference between the mean. Non-parametric means that it does not assume that data comes from any distribution. Look at the documentation for Mann-Whitney test in R (?wilcox.test) and write a code that test whether there is difference in mortality between Europe and Africa.
+```{r}
+# ToDo: Write your code here
+
+```
+
+- What is the p-value? Is it significant? Write your conclusions from the statistical test results.
+```{}
+Write your answer here: 
+
+```
+
+- You read on the internet a claim that the high level of development in the country increases the risk to die from COVID-19
+- The blog shows this plot as evidence:
+```{r}
+death.vs.hdi <- covid_world_data[covid_world_data$date == "2021-11-01",
+                                 c("location", "continent", "total_deaths_per_million", "human_development_index")]
+death.vs.hdi.noNA <- death.vs.hdi[rowSums(is.na(death.vs.hdi)) == 0, ]
+death.vs.hdi.noNA <- death.vs.hdi.noNA[death.vs.hdi.noNA$continent != "",]
+ggplot(death.vs.hdi.noNA, aes(x=human_development_index, y=total_deaths_per_million)) +
+  geom_point(aes(col=continent), size=2) +
+  scale_y_continuous(breaks = seq(0,6000,1000)) +
+  scale_x_continuous(breaks = seq(0.4,1,0.1)) +
+  labs(x="Human Development Index", y="Deaths (per million)", title="", col="") +
+  theme_bw()
+```
+
+- Use the "cor()" function to find the Pearson correlation coefficient between "total_deaths_per_million" and "human_development_index"
+- Use the dataframe "death.vs.hdi.noNA" from the code above
+```{r}
+?cor
+# ToDo: Write your code here
+
+```
+
+- Report the Pearson correlation coefficient, the strength of the correlation (low/moderate/strong/perfect) and the direction  (negative/positive)
+```{}
+Write your answer here: 
+
+```
+
+- Do you agree with the claim that increased human development index causes increase in COVID-19 mortality (write in detail)?
+```{}
+Write your answer here: 
+
+```
+
+- - Find an alternative explanation for the result (Bonus)
+```{}
+Write your answer here: 
+
+```
+
+
+## Task 3 - Sequence Alignment
+
+- Take a look at the "Biostrings" package vignettes
+```{r}
+browseVignettes("Biostrings")
+```
+
+- Download the file "covid_spike_variants.fasta" from the course website
+- This file contain the amino acids sequence of COVID19 spike protein from different variants
+- Read the file using the correct function from the package "Biostrings" and assign to a variable called "variants"
+```{r}
+# ToDo: Write your code here
+
+```
+
+- Print the 19th amino acid of the Delta variant?
+```{r}
+# ToDo: Write your code here
+
+```
+
+- Write a for-loop that goes over each sequence in "variants"
+- Calculate the alignment score for the sequence "VNLRTRT"
+- Use the Smith-Waterman local alignment function from the Biostrings package
+- Save your results in a vector called "alignment.out"
+```{r}
+alignment.out <- c() # initiate an empty vector
+# ToDo: Write your for loop here
+
+```
+
+- Look at the results
+```{r}
+alignment.out
+```
+
+- Which variant has the highest score for the alignment?
+```{}
+Write your answer here: 
+
+```
+
+- Read the documentation for the Multiple Sequence Alignment (msa) function from the package "msa"
+```{r}
+?msa()
+```
+
+- Run MSA for the sequences in "variants" and assign the results to "variants.msa"
+```{r}
+# ToDo: Write your code here
+
+```
+
+- Take a look at the results using the package "msaR"
+- Notice: you can scroll right and left to see all the sequence
+```{r}
+msaR(AAMultipleAlignment(variants.msa), colorscheme = "taylor")
+```
+
+- Let's make a phylogenetic tree for the COVID19 variants
+- Install the packages "seqinr" and "ape" and run this code
+```{r}
+library(seqinr, quietly = T)
+library(ape, quietly = T)
+variants.seqinr <- msaConvert(variants.msa, type="seqinr::alignment")
+variants.seqinr.dist <- dist.alignment(variants.seqinr, "identity")
+varTree <- nj(variants.seqinr.dist)
+plot(varTree, main="Phylogenetic Tree of COVID19 Variants")
+```
+
+- The package "seqinr" use the results from the MSA to build a distance matrix
+- The package "ape" use the "neighbor-joining" (nj) algorithm to construct the tree
+
+
+- Look at the phylogenetic tree and answer the following questions:
+- (1) Which variant is the most closely relate to the Delta variant?
+- (2) Which variants seems to have emerged from the alpha UK variant?
+```{}
+Write your answer here: 
+
+```
